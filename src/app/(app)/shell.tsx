@@ -61,6 +61,9 @@ export default function Shell({ user, outlet, outlets, modules, children }: {
   const [, start] = useTransition();
   const items = NAV.filter((n) => modules.includes(n.mod));
   const fullBleed = pathname.startsWith("/pos") || pathname.startsWith("/kds");
+  // phone bottom bar: the first few screens this person actually uses, then "More" for the full menu
+  const quick = (["dashboard", "pos", "orders", "kds", "delivery"] as Module[]).filter((m) => modules.includes(m)).slice(0, 4)
+    .map((m) => NAV.find((n) => n.mod === m)!);
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-2 scrollbar-thin">
@@ -129,7 +132,28 @@ export default function Shell({ user, outlet, outlets, modules, children }: {
           <div className="text-sm font-semibold">Misal Hub OS</div>
           <div className="ml-auto truncate text-xs text-[var(--muted)]">{outlet.name}</div>
         </header>
-        <main className={fullBleed ? "min-w-0 flex-1" : "mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 sm:p-6"}>{children}</main>
+        <main className={fullBleed ? "min-w-0 flex-1" : "mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 pb-24 sm:p-6 lg:pb-6"}>{children}</main>
+        {!fullBleed && (
+          <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+            <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${quick.length + 1}, minmax(0, 1fr))` }}>
+              {quick.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <li key={href}>
+                    <Link href={href} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${active ? "text-brand-600" : "text-stone-500"}`}>
+                      <Icon size={21} /> {label}
+                    </Link>
+                  </li>
+                );
+              })}
+              <li>
+                <button onClick={() => setOpen(true)} className="flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-stone-500">
+                  <MenuIcon size={21} /> More
+                </button>
+              </li>
+            </ul>
+          </nav>
+        )}
       </div>
     </div>
   );

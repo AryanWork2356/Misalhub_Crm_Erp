@@ -98,18 +98,34 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     );
   } else {
     const pl = await profitAndLoss(scope);
+    const pct = (n: number) => (pl.netSales ? ((n / pl.netSales) * 100).toFixed(1) : "0");
     body = (
-      <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
-        <section className="card p-5"><h2 className="mb-3 text-sm font-semibold">Profit &amp; loss</h2>
-          <dl className="space-y-2 text-sm">
-            <PL k="Sales (incl. GST)" v={fmt(pl.sales)} /><PL k="− GST collected" v={fmt(pl.tax)} muted /><PL k="Net sales" v={fmt(pl.netSales)} bold />
-            <PL k="− Food cost (recipes)" v={fmt(Math.round(pl.cogs))} muted /><PL k="Gross profit" v={fmt(Math.round(pl.gross))} bold />
-            <PL k="− Operating expenses" v={fmt(pl.expenses)} muted />
-            <div className={`flex justify-between border-t border-[var(--border)] pt-2 text-lg font-semibold ${pl.net >= 0 ? "text-emerald-700" : "text-red-600"}`}><dt>Net profit</dt><dd>{fmt(Math.round(pl.net))}</dd></div>
-            <div className="text-xs text-[var(--muted)]">Margin {pl.netSales ? ((pl.net / pl.netSales) * 100).toFixed(1) : "0"}% · food cost {pl.netSales ? ((pl.cogs / pl.netSales) * 100).toFixed(1) : "0"}% of net sales</div></dl>
-          {pl.recipeCoverage < 0.9 && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">Only {Math.round(pl.recipeCoverage * 100)}% of item sales have a recipe, so food cost is understated and profit overstated. Add the missing recipes in Inventory → Recipes.</p>}
-          <p className="mt-3 text-xs text-[var(--muted)]">Food cost is estimated from recipes × average ingredient cost. Raw-material expenses are also in expenses, so for a cash view compare against purchases.</p></section>
-        <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">Expenses by category</h2><HBars rows={pl.expenseRows.map((e) => ({ label: e.category, value: e.v }))} /></section>
+      <div className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="card p-5">
+            <h2 className="text-sm font-semibold">Money in vs money out</h2>
+            <p className="mb-3 text-xs text-[var(--muted)]">The simple view: what you earned minus everything you spent.</p>
+            <dl className="space-y-2 text-sm">
+              <PL k="Sales (bills, incl. GST)" v={fmt(pl.sales)} /><PL k="− GST (belongs to the government)" v={fmt(pl.tax)} muted /><PL k="You earned (net sales)" v={fmt(pl.netSales)} bold />
+              <PL k="− Everything you spent" v={fmt(pl.expenses)} muted />
+              <div className={`flex justify-between border-t border-[var(--border)] pt-2 text-lg font-semibold ${pl.cashProfit >= 0 ? "text-emerald-700" : "text-red-600"}`}><dt>{pl.cashProfit >= 0 ? "Profit" : "Loss"}</dt><dd className="tabular-nums">{fmt(Math.round(pl.cashProfit))}</dd></div>
+              <div className="text-xs text-[var(--muted)]">Profit margin {pct(pl.cashProfit)}% of net sales</div>
+            </dl>
+          </section>
+          <section className="card p-5">
+            <h2 className="text-sm font-semibold">Profit using recipe food cost</h2>
+            <p className="mb-3 text-xs text-[var(--muted)]">Uses what the food actually cost to make, not what you bought.</p>
+            <dl className="space-y-2 text-sm">
+              <PL k="Net sales" v={fmt(pl.netSales)} /><PL k="− Food cost (from recipes)" v={fmt(Math.round(pl.cogs))} muted /><PL k="Gross profit" v={fmt(Math.round(pl.gross))} bold />
+              <PL k="− Other expenses (rent, salary, gas…)" v={fmt(pl.opex)} muted />
+              <div className={`flex justify-between border-t border-[var(--border)] pt-2 text-lg font-semibold ${pl.net >= 0 ? "text-emerald-700" : "text-red-600"}`}><dt>Net profit</dt><dd className="tabular-nums">{fmt(Math.round(pl.net))}</dd></div>
+              <div className="text-xs text-[var(--muted)]">Food cost {pct(pl.cogs)}% · net margin {pct(pl.net)}%</div>
+            </dl>
+            {pl.recipeCoverage < 0.9 && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">Only {Math.round(pl.recipeCoverage * 100)}% of item sales have a recipe, so food cost is understated and this profit looks better than it is. Add the missing recipes in Inventory → Recipes, or trust the left card.</p>}
+          </section>
+        </div>
+        <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">Where the money went</h2><HBars rows={pl.expenseRows.map((e) => ({ label: e.category, value: e.v }))} />
+          <p className="mt-3 text-xs text-[var(--muted)]">Why two profit numbers? The left card is cash in minus cash out for the period (stock bought but not yet sold counts as spent). The right card matches ingredient cost to what was actually sold, and leaves out “Raw material” spending so it isn’t counted twice. Both exclude GST.</p></section>
       </div>
     );
   }
@@ -127,9 +143,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       </PageHeader>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {presets.map(([label, f, t]) => <Link key={label} href={`/reports?${qs({ from: f, to: t })}`} className={`rounded-full border px-3 py-1 text-sm font-medium ${from === f && to === t ? "border-brand-500 bg-brand-50 text-brand-700" : "border-[var(--border)] bg-white text-stone-600"}`}>{label}</Link>)}
-        <form className="ml-auto flex items-center gap-1.5 text-sm">
+        <form className="flex w-full flex-wrap items-center gap-1.5 text-sm sm:ml-auto sm:w-auto">
           <input type="hidden" name="tab" value={tab} /><input type="hidden" name="outlet" value={sp.outlet ?? ""} />
-          <input type="date" name="from" defaultValue={from} className="input w-auto py-1" aria-label="From" /> – <input type="date" name="to" defaultValue={to} className="input w-auto py-1" aria-label="To" />
+          <input type="date" name="from" defaultValue={from} className="input w-auto min-w-0 flex-1 py-1 sm:flex-none" aria-label="From" /> – <input type="date" name="to" defaultValue={to} className="input w-auto min-w-0 flex-1 py-1 sm:flex-none" aria-label="To" />
           <button className="btn-dark btn-sm">Apply</button>
         </form>
       </div>

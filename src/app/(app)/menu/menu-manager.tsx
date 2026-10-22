@@ -40,7 +40,25 @@ export default function MenuManager({ items, categories, groups, canEdit }: { it
           <button onClick={() => setEdit({ categoryId: categories[0]?.id, taxPct: 5, isVeg: true, prepMinutes: 8, station: "main", active: true, groupIds: [], price: 0 })} className="btn-primary"><Plus size={15} /> Add item</button>
         </div>}
       </div>
-      <div className="card overflow-x-auto">
+      <div className="space-y-2 md:hidden">
+        {shown.map((i) => {
+          const price = i.outletPrice ?? i.price;
+          return (
+            <div key={i.id} className={`card p-3 ${!i.active ? "opacity-50" : ""}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><div className="font-semibold leading-tight">{i.name} {i.isBestseller && "⭐"}</div>
+                  <div className="text-xs text-[var(--muted)]">{categories.find((c) => c.id === i.categoryId)?.name}{i.jainAvailable && " · Jain"}{!i.active && " · inactive"}</div></div>
+                <button onClick={() => setPriceFor(i)} className="shrink-0 text-base font-semibold" aria-label={`Set price for ${i.name}`}>{fmt(price)}{i.outletPrice != null && <span className="ml-1 text-[10px] text-brand-700">local</span>}</button>
+              </div>
+              <div className="mt-2.5 flex items-center justify-between gap-2">
+                <button onClick={() => toggleAvail(i)} className={`badge cursor-pointer px-3 py-1.5 text-xs ${i.available ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`}>{i.available ? "Available · tap to mark sold out" : "Sold out · tap to restore"}</button>
+                {canEdit && <button onClick={() => setEdit(i)} className="btn-ghost btn-sm"><Pencil size={14} /> Edit</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full min-w-[820px]">
           <thead className="border-b border-[var(--border)]"><tr><th className="th">Item</th><th className="th">Category</th><th className="th text-right">Price</th><th className="th text-right">Food cost</th><th className="th text-right">GST</th><th className="th">Availability</th><th className="th" /></tr></thead>
           <tbody>

@@ -49,7 +49,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
       {incoming.length > 0 && <IncomingOrders orders={incoming.map((o) => ({ id: o.id, orderNo: o.orderNo, channel: o.channel, type: o.type, customerName: o.customerName, customerPhone: o.customerPhone, address: o.deliveryAddress, total: o.total, notes: o.notes, createdAt: o.createdAt.toISOString(), lines: incomingLines.filter((l) => l.orderId === o.id).map((l) => ({ name: l.name, qty: l.qty, mods: l.modifiers.map((m) => m.name).join(", ") })) }))} />}
 
-      <div className="card overflow-x-auto">
+      {/* phone: one card per order so total/status are visible without sideways scrolling */}
+      <div className="space-y-2 md:hidden">
+        {rows.map((o) => (
+          <Link key={o.id} href={`/orders/${o.id}`} className="card block p-3 active:bg-stone-50">
+            <div className="flex items-center justify-between gap-2"><span className="text-base font-semibold text-brand-700">#{o.orderNo}</span><span className="text-base font-semibold">{fmt(o.total)}</span></div>
+            <div className="mt-0.5 text-sm text-[var(--muted)]">{fmtTime(o.createdAt)} · {TYPE_LABEL[o.type]}{o.channel !== "pos" ? ` · ${CHANNEL_LABEL[o.channel]}` : ""}{(o.customerName || o.customerPhone) ? ` · ${o.customerName || o.customerPhone}` : ""}</div>
+            <div className="mt-2 flex gap-1.5"><StatusBadge s={o.status} /><StatusBadge s={o.paymentStatus} /></div>
+          </Link>
+        ))}
+        {rows.length === 0 && <div className="card"><Empty>No orders found for this filter.</Empty></div>}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full min-w-[720px]">
           <thead className="border-b border-[var(--border)]"><tr><th className="th">#</th><th className="th">Time</th><th className="th">Type</th><th className="th">Customer</th><th className="th">Status</th><th className="th">Payment</th><th className="th text-right">Total</th></tr></thead>
           <tbody>

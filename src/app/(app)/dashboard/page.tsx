@@ -3,9 +3,9 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { AlertTriangle, BellRing } from "lucide-react";
 import { getDb, schema } from "@/db";
 import { currentOutletId, requireUser } from "@/lib/auth";
-import { addDays, businessDate, fmtDate } from "@/lib/dates";
+import { addDays, businessDate, fmtDate, monthStart } from "@/lib/dates";
 import { fmt, fmtCompact } from "@/lib/money";
-import { dailySeries, hourlySeries, lowStock, paymentSplit, splitBy, summary, topItems } from "@/lib/reports";
+import { dailySeries, hourlySeries, lowStock, paymentSplit, profitAndLoss, splitBy, summary, topItems } from "@/lib/reports";
 import { PageHeader, Stat, CHANNEL_LABEL, TYPE_LABEL } from "@/components/ui";
 import { BarsChart, TrendChart } from "@/components/charts";
 import { Delta, HBars } from "@/components/viz";
@@ -23,8 +23,9 @@ export default async function Dashboard() {
   const y = { outletIds: [outletId], from: addDays(today, -1), to: addDays(today, -1) };
   const week = { outletIds: [outletId], from: addDays(today, -13), to: today };
 
-  const [sum, ysum, hourly, daily, top, pay, types, channels, low] = await Promise.all([
+  const [sum, ysum, hourly, daily, top, pay, types, channels, low, mtd] = await Promise.all([
     summary(t), summary(y), hourlySeries(t), dailySeries(week), topItems(t, 6), paymentSplit(t), splitBy(t, "type"), splitBy(t, "channel"), lowStock(outletId),
+    profitAndLoss({ outletIds: [outletId], from: monthStart(today), to: today }),
   ]);
   const open = await db.select({ n: sql<number>`COUNT(*)::int` }).from(schema.orders).where(and(eq(schema.orders.outletId, outletId), inArray(schema.orders.status, ["new", "preparing", "ready", "served", "out_for_delivery"])));
   const incoming = await db.select({ n: sql<number>`COUNT(*)::int` }).from(schema.orders).where(and(eq(schema.orders.outletId, outletId), eq(schema.orders.status, "new"), sql`channel <> 'pos'`, sql`NOT EXISTS (SELECT 1 FROM kots k WHERE k.order_id = orders.id)`));
@@ -48,6 +49,15 @@ export default async function Dashboard() {
         <Stat label="Avg order value" value={fmt(sum.avgOrder)} sub={`Yesterday ${fmt(ysum.avgOrder)}`} />
         <Stat label="Open orders now" value={String(open[0].n)} sub={sum.cancelled ? `${sum.cancelled} cancelled today` : "None cancelled"} tone={open[0].n > 6 ? "warn" : undefined} />
       </div>
+
+      <section className="card mt-4 p-4">
+        <div className="mb-2 flex items-baseline justify-between"><h2 className="text-sm font-semibold">This month so far</h2><Link href="/reports?tab=pnl" className="text-xs font-medium text-brand-700">Profit &amp; loss →</Link></div>
+        <div className="grid grid-cols-3 gap-3 text-center sm:text-left">
+          <div><div className="text-xs text-[var(--muted)]">Earned (excl. GST)</div><div className="text-lg font-semibold tabular-nums sm:text-xl">{fmtCompact(mtd.netSales)}</div></div>
+          <div><div className="text-xs text-[var(--muted)]">Spent</div><div className="text-lg font-semibold tabular-nums sm:text-xl">{fmtCompact(mtd.expenses)}</div></div>
+          <div><div className="text-xs text-[var(--muted)]">{mtd.cashProfit >= 0 ? "Profit" : "Loss"}</div><div className={`text-lg font-semibold tabular-nums sm:text-xl ${mtd.cashProfit >= 0 ? "text-emerald-700" : "text-red-600"}`}>{fmtCompact(Math.round(mtd.cashProfit))}</div></div>
+        </div>
+      </section>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <section className="card p-4"><h2 className="mb-2 text-sm font-semibold">Sales by hour</h2><BarsChart data={hourly.map((h) => ({ label: h.label, value: h.sales, sub: `${h.orders} orders` }))} /></section>

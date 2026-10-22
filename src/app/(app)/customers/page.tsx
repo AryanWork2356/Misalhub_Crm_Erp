@@ -48,7 +48,17 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           ))}
         </div>
       </form>
-      <div className="card overflow-x-auto">
+      <div className="space-y-2 md:hidden">
+        {shown.map(({ c, seg }) => (
+          <Link key={c.id} href={`/customers/${c.id}`} className="card block p-3 active:bg-stone-50">
+            <div className="flex items-center justify-between gap-2"><span className="font-semibold">{c.name || "Unnamed"}</span><span className={`badge ${SEGMENT_STYLE[seg]}`}>{SEGMENT_LABEL[seg]}</span></div>
+            <div className="text-sm text-[var(--muted)]">{c.phone}</div>
+            <div className="mt-1.5 flex flex-wrap gap-x-4 text-sm"><span>{c.visits} visits</span><span>{fmt(c.totalSpent)}</span><span>{c.loyaltyPoints} pts</span></div>
+          </Link>
+        ))}
+        {shown.length === 0 && <div className="card"><Empty>No customers match.</Empty></div>}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full min-w-[720px]">
           <thead className="border-b border-[var(--border)]"><tr><th className="th">Customer</th><th className="th">Segment</th><th className="th text-right">Visits</th><th className="th text-right">Spent</th><th className="th">Last visit</th><th className="th text-right">Points</th></tr></thead>
           <tbody>

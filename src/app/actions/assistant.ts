@@ -45,7 +45,7 @@ async function snapshot(outletId: number) {
     last7Days: { sales: r(sum7.sales), orders: sum7.orders, avgOrder: r(sum7.avgOrder), discounts: r(sum7.discount), cancelled: sum7.cancelled },
     previous7Days: { sales: r(sumPrev.sales), orders: sumPrev.orders, avgOrder: r(sumPrev.avgOrder) },
     last30Days: { sales: r(sum30.sales), orders: sum30.orders, avgOrder: r(sum30.avgOrder), discounts: r(sum30.discount), gstIncluded: r(sum30.tax) },
-    profitAndLoss30d: { netSales: r(pl.netSales), foodCostEstimate: r(pl.cogs), grossProfit: r(pl.gross), expenses: r(pl.expenses), netProfit: r(pl.net), expenseByCategory: pl.expenseRows.map((e) => ({ category: e.category, amount: r(e.v) })) },
+    profitAndLoss30d: { netSalesExclGst: r(pl.netSales), totalSpent: r(pl.expenses), cashProfit: r(pl.cashProfit), foodCostFromRecipes: r(pl.cogs), otherExpensesExclRawMaterial: r(pl.opex), profitUsingRecipeCost: r(pl.net), recipeCoveragePct: Math.round(pl.recipeCoverage * 100), expenseByCategory: pl.expenseRows.map((e) => ({ category: e.category, amount: r(e.v) })) },
     dailySales30d: daily.map((d) => ({ date: d.d, sales: r(d.sales), orders: d.orders })),
     salesByHour30d: hourly.filter((h) => h.orders > 0).map((h) => ({ hour: h.h, sales: r(h.sales), orders: h.orders })),
     topItems30d: top.map((i) => ({ item: i.name, category: i.category, qty: i.qty, revenue: r(i.revenue) })),

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
@@ -71,34 +72,45 @@ export async function verifyLogin(phone: string, secretValue: string, mode: "pas
   return user;
 }
 
+// React cache(): the layout and the page both ask for the user / outlet in the same request.
+// This makes each lookup run once per request instead of once per caller.
+const loadUser = cache(async (id: number) => {
+  const db = await getDb();
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1);
+  return user;
+});
+
 /** For server components/actions: returns the logged-in user or redirects to /login. */
 export async function requireUser(mod?: Module): Promise<{ user: User; session: Session }> {
   const session = await getSession();
   if (!session) redirect("/login");
-  const db = await getDb();
-  const [user] = await db.select().from(schema.users).where(eq(schema.users.id, session.userId)).limit(1);
+  const user = await loadUser(session.userId);
   if (!user || !user.active) redirect("/login");
   if (mod && !can(user.role, mod)) redirect(HOME[user.role]);
   return { user, session };
 }
 
-/**
- * Outlet the user may operate on. Head office can pick any outlet via the `mh_outlet` cookie;
- * everyone else is pinned to their own outlet.
- */
-export async function currentOutletId(user: User): Promise<number> {
+const resolveOutlet = cache(async (userId: number, headOffice: boolean, ownOutlet: number | null, chosen: number): Promise<number> => {
   const db = await getDb();
-  if (!isHeadOffice(user.role)) {
-    if (!user.outletId) throw new Error("User is not assigned to an outlet");
-    return user.outletId;
+  if (!headOffice) {
+    if (!ownOutlet) throw new Error("User is not assigned to an outlet");
+    return ownOutlet;
   }
-  const chosen = Number((await cookies()).get("mh_outlet")?.value);
   if (chosen) {
     const [o] = await db.select({ id: schema.outlets.id }).from(schema.outlets).where(and(eq(schema.outlets.id, chosen), eq(schema.outlets.active, true)));
     if (o) return o.id;
   }
   const [first] = await db.select({ id: schema.outlets.id }).from(schema.outlets).where(eq(schema.outlets.active, true)).orderBy(schema.outlets.id).limit(1);
   return first.id;
+});
+
+/**
+ * Outlet the user may operate on. Head office can pick any outlet via the `mh_outlet` cookie;
+ * everyone else is pinned to their own outlet.
+ */
+export async function currentOutletId(user: User): Promise<number> {
+  const chosen = Number((await cookies()).get("mh_outlet")?.value) || 0;
+  return resolveOutlet(user.id, isHeadOffice(user.role), user.outletId, chosen);
 }
 
 export async function writeAudit(userId: number | null, outletId: number | null, action: string, entity = "", entityId: string | number = "", detail = "") {

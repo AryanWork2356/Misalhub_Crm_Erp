@@ -28,7 +28,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
   return (
     <div>
       <PageHeader title="Expenses" subtitle={`${fmtDate(from)} – ${fmtDate(to)}`}>
-        <form className="flex items-center gap-1.5 text-sm"><input type="date" name="from" defaultValue={from} className="input w-auto py-1" aria-label="From" /> – <input type="date" name="to" defaultValue={to} className="input w-auto py-1" aria-label="To" /><button className="btn-dark btn-sm">Apply</button></form>
+        <form className="flex w-full flex-wrap items-center gap-1.5 text-sm sm:w-auto"><input type="date" name="from" defaultValue={from} className="input w-auto min-w-0 flex-1 py-1 sm:flex-none" aria-label="From" /> – <input type="date" name="to" defaultValue={to} className="input w-auto min-w-0 flex-1 py-1 sm:flex-none" aria-label="To" /><button className="btn-dark btn-sm">Apply</button></form>
       </PageHeader>
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Total expenses" value={fmt(total)} /><Stat label="Per day" value={fmt(Math.round(total / days))} /><Stat label="Entries" value={String(rows.length)} /><Stat label="Biggest category" value={byCat[0]?.category ?? "—"} sub={byCat[0] ? fmt(byCat[0].v) : undefined} />
@@ -36,7 +36,16 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="space-y-4">
           <ExpenseForm today={today} categories={[...schema.EXPENSE_CATEGORIES]} />
-          <section className="card overflow-x-auto"><table className="w-full min-w-[560px]">
+          <div className="space-y-2 md:hidden">
+            {rows.map((e) => (
+              <div key={e.id} className="card flex items-start justify-between gap-3 p-3">
+                <div className="min-w-0"><div className="font-semibold">{e.category}</div><div className="text-sm text-[var(--muted)]">{fmtDate(e.expenseDate)} · {e.method.toUpperCase()}{e.note ? ` · ${e.note}` : ""}</div></div>
+                <div className="flex shrink-0 items-center gap-1"><span className="text-base font-semibold">{fmt(e.amount)}</span>{isManagerUp(user.role) && <DeleteExpense id={e.id} />}</div>
+              </div>
+            ))}
+            {rows.length === 0 && <div className="card"><Empty>No expenses in this period.</Empty></div>}
+          </div>
+          <section className="card hidden overflow-x-auto md:block"><table className="w-full min-w-[560px]">
             <thead className="border-b border-[var(--border)]"><tr><th className="th">Date</th><th className="th">Category</th><th className="th">Note</th><th className="th">Mode</th><th className="th text-right">Amount</th><th className="th" /></tr></thead>
             <tbody>{rows.map((e) => <tr key={e.id} className="border-b border-stone-100 last:border-0"><td className="td">{fmtDate(e.expenseDate)}</td><td className="td">{e.category}</td><td className="td text-[var(--muted)]">{e.note}</td><td className="td uppercase text-[var(--muted)]">{e.method}</td><td className="td text-right font-medium tabular-nums">{fmt(e.amount)}</td><td className="td text-right">{isManagerUp(user.role) && <DeleteExpense id={e.id} />}</td></tr>)}</tbody></table>
             {rows.length === 0 && <Empty>No expenses in this period.</Empty>}</section>

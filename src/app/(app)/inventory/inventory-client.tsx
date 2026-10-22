@@ -25,7 +25,24 @@ export function StockTable({ rows, canManage }: { rows: Row[]; canManage: boolea
         <div className="relative w-full sm:w-64"><Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ingredients…" className="input pl-9" /></div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={only} onChange={(e) => setOnly(e.target.checked)} className="h-4 w-4 accent-brand-500" /> Low stock only</label>
       </div>
-      <div className="card overflow-x-auto">
+      <div className="space-y-2 md:hidden">
+        {shown.map((r) => {
+          const out = r.qty <= 0; const low = r.qty <= r.min;
+          return (
+            <div key={r.id} className="card p-3">
+              <div className="flex items-start justify-between gap-2"><div><div className="font-semibold leading-tight">{r.name}</div><div className="text-xs text-[var(--muted)]">{r.category}</div></div>
+                <span className={`badge ${out ? "bg-red-100 text-red-700" : low ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{out ? "Out" : low ? "Low" : "OK"}</span></div>
+              <div className="mt-2 flex items-baseline justify-between text-sm"><span><b className="text-base tabular-nums">{num(r.qty)}</b> {r.unit} on hand</span><span className="text-[var(--muted)]">min {r.min} {r.unit}</span></div>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <button onClick={() => setMove({ row: r, kind: "production" })} className="btn-ghost btn-sm">+ Batch</button>
+                <button onClick={() => setMove({ row: r, kind: "wastage" })} className="btn-ghost btn-sm">Waste</button>
+                {canManage && <button onClick={() => setMove({ row: r, kind: "count" })} className="btn-ghost btn-sm">Count</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full min-w-[760px]">
           <thead className="border-b border-[var(--border)]"><tr><th className="th">Ingredient</th><th className="th text-right">On hand</th><th className="th text-right">Minimum</th><th className="th text-right">Avg cost</th><th className="th text-right">Value</th><th className="th">Status</th><th className="th" /></tr></thead>
           <tbody>

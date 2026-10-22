@@ -134,9 +134,12 @@ export async function profitAndLoss(s: Scope) {
   /** share of item revenue that has a recipe — food cost is only meaningful when this is high */
   const recipeCoverage = totalItemRevenue ? sold.filter((i) => costs.has(i.id)).reduce((sum, i) => sum + i.revenue, 0) / totalItemRevenue : 0;
   const expensesTotal = exp.reduce((a, b) => a + b.v, 0);
+  // Raw-material spending is already represented by the recipe-based food cost, so it must not be subtracted twice.
+  const rawPurchases = exp.find((e) => e.category === "Raw material")?.v ?? 0;
+  const opex = expensesTotal - rawPurchases;
   const netSales = sm.sales - sm.tax;
   const gross = netSales - cogs;
-  return { ...sm, netSales, cogs, gross, recipeCoverage, expenses: expensesTotal, expenseRows: exp, net: gross - expensesTotal };
+  return { ...sm, netSales, cogs, gross, recipeCoverage, expenses: expensesTotal, rawPurchases, opex, expenseRows: exp, net: gross - opex, cashProfit: netSales - expensesTotal };
 }
 
 export async function lowStock(outletId: number) {

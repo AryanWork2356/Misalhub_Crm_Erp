@@ -25,7 +25,16 @@ export function TeamManager({ staff, actorRole, outlets, defaultOutletId }: { st
   return (
     <>
       <div className="mb-3 flex justify-end"><button onClick={() => setEdit({ role: allowed.includes("cashier") ? "cashier" : allowed[0], outletId: defaultOutletId, active: true, salary: 0 })} className="btn-primary"><UserPlus size={15} /> Add staff</button></div>
-      <div className="card overflow-x-auto"><table className="w-full min-w-[640px]">
+      <div className="space-y-2 md:hidden">
+        {staff.map((s) => (
+          <div key={s.id} className={`card flex items-center justify-between gap-3 p-3 ${!s.active ? "opacity-50" : ""}`}>
+            <div className="min-w-0"><div className="font-semibold">{s.name}{!s.active && <span className="badge ml-2 bg-stone-200 text-stone-600">inactive</span>}</div>
+              <div className="text-sm text-[var(--muted)]">{ROLE_LABEL[s.role]} · {s.phone}</div></div>
+            {allowed.includes(s.role) && <button onClick={() => setEdit(s)} className="btn-ghost btn-sm shrink-0" aria-label={`Edit ${s.name}`}><Pencil size={14} /> Edit</button>}
+          </div>
+        ))}
+      </div>
+      <div className="card hidden overflow-x-auto md:block"><table className="w-full min-w-[640px]">
         <thead className="border-b border-[var(--border)]"><tr><th className="th">Name</th><th className="th">Role</th><th className="th">Mobile</th><th className="th text-right">Salary</th><th className="th">Last login</th><th className="th" /></tr></thead>
         <tbody>{staff.map((s) => (
           <tr key={s.id} className={`border-b border-stone-100 last:border-0 ${!s.active ? "opacity-50" : ""}`}>
