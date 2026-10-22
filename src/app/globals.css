@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fff4ec;
+  --color-brand-100: #ffe3cf;
+  --color-brand-200: #ffc59e;
+  --color-brand-300: #ffa066;
+  --color-brand-400: #ff7a33;
+  --color-brand-500: #f45d0a;
+  --color-brand-600: #e04a00;
+  --color-brand-700: #b83a02;
+  --color-brand-800: #932f0a;
+  --color-brand-900: #78290c;
+  --color-ink: #1f1a17;
+  --color-paper: #faf7f4;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  --bg: #faf7f4;
+  --surface: #ffffff;
+  --border: #ece6df;
+  --muted: #7a6f66;
+  --text: #1f1a17;
+}
+
+html, body { background: var(--bg); color: var(--text); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+@layer components {
+  .card { @apply rounded-xl border border-[var(--border)] bg-white shadow-[0_1px_2px_rgba(31,26,23,0.04)]; }
+  .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none; }
+  .btn-primary { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none bg-brand-500 text-white hover:bg-brand-600 shadow-sm; }
+  .btn-dark { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none bg-ink text-white hover:bg-black; }
+  .btn-ghost { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none bg-white border border-[var(--border)] text-ink hover:bg-stone-50; }
+  .btn-danger { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none bg-red-600 text-white hover:bg-red-700; }
+  .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+  .btn-lg { @apply px-5 py-3 text-base; }
+  .input { @apply w-full rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100; }
+  .label { @apply mb-1 block text-xs font-medium text-[var(--muted)]; }
+  .badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold; }
+  .th { @apply px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]; }
+  .td { @apply px-3 py-2.5 text-sm; }
+  .kpi { @apply rounded-xl border border-[var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(31,26,23,0.04)]; }
+  .page-title { @apply text-xl font-semibold tracking-tight; }
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #d9d0c7; border-radius: 6px; }
+
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; left: 0; top: 0; width: 80mm; }
+  @page { size: 80mm auto; margin: 3mm; }
+}
