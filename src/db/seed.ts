@@ -156,7 +156,7 @@ async function main() {
 
   const hash = (p: string) => bcrypt.hashSync(p, 10);
   const staff: { name: string; phone: string; role: schema.UserRole; outletId: number | null; pin?: string; password?: string; salary?: number }[] = [
-    { name: "Owner", phone: "9004167448", role: "owner", outletId: null, password: demoPass, pin: "1111" },
+    { name: "Owner", phone: process.env.SEED_OWNER_PHONE || "9004167448", role: "owner", outletId: null, password: demoPass, pin: "1111" },
     { name: "Head Office Admin", phone: "9000000001", role: "admin", outletId: null, password: demoPass, pin: "2222" },
     { name: "Store Manager", phone: "9000000002", role: "manager", outletId: hq.id, password: demoPass, pin: "3333", salary: 25000 },
     { name: "Cashier", phone: "9000000003", role: "cashier", outletId: hq.id, pin: "4444", salary: 15000 },
@@ -167,7 +167,7 @@ async function main() {
   ];
   // In production only the owner is created; add everyone else from Staff in the app.
   const seedStaff = (prod ? (demoStaff ? staff : staff.filter((s) => s.role === "owner")) : staff)
-    .map((s) => (demoStaff ? { ...s, pin: process.env.SEED_STAFF_PIN, password: s.password ? demoPass : undefined } : s));
+    .map((s) => (prod ? { ...s, pin: demoStaff ? process.env.SEED_STAFF_PIN : undefined, password: s.password ? demoPass : undefined } : s)); // never ship the default dev PINs to a real database
   await db.insert(schema.users).values(seedStaff.map((s) => ({
     name: s.name, phone: s.phone, role: s.role, outletId: s.outletId, monthlySalary: rs(s.salary ?? 0),
     passwordHash: s.password ? hash(s.password) : null, pinHash: s.pin ? hash(s.pin) : null,
@@ -235,7 +235,7 @@ async function main() {
   console.log("\nSeed complete.");
   console.log(`Items: ${itemRows.length}, ingredients: ${ingRows.length}, recipes: ${recipeRows.length}`);
   console.log("\nLogins (phone / password or PIN):");
-  for (const s of seedStaff) console.log(`  ${s.role.padEnd(10)} ${s.phone}  ${s.password ? "password: " + s.password + "  " : ""}${s.pin ? "PIN: " + s.pin : ""}`);
+  for (const s of seedStaff) console.log(`  ${s.role.padEnd(10)} ${s.phone}  ${prod ? "(password/PIN as you set in the env file)" : `${s.password ? "password: " + s.password + "  " : ""}${s.pin ? "PIN: " + s.pin : ""}`}`);
   console.log(prod ? "\nSign in as the owner and add your staff from Staff → Add staff.\n" : "\nThese are demo credentials — never use them in production.\n");
   process.exit(0);
 }

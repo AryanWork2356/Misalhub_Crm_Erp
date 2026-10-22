@@ -67,6 +67,7 @@ These exist only in the dev seed. **Never use them in production** (see below).
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string. **Empty in dev** → embedded database. Required in production. |
 | `SESSION_SECRET` | 32+ random characters used to sign login sessions. **Required in production** (the app refuses to start sessions without it). Generate: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+| `SEED_OWNER_PHONE` | Optional, seed only: mobile number for the owner login (default 9004167448). |
 | `ANTHROPIC_API_KEY` | Optional. Enables the *Ask your business* assistant in Insights. Without it everything else works. |
 | `ANTHROPIC_MODEL` | Optional model override (default `claude-opus-5-5`). |
 | `NEXT_PUBLIC_APP_URL` | Your public URL, shown in Settings → Online ordering. |
