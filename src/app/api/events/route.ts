@@ -11,6 +11,9 @@ export const maxDuration = 60; // serverless limit; the browser reconnects autom
 
 /** Server-Sent Events stream of order changes for the signed-in user's current outlet. */
 export async function GET(req: Request) {
+  // Serverless functions can't hold a stream open or share events between instances, so on Vercel the screens
+  // use polling instead. 204 tells the browser's EventSource to stop trying.
+  if (process.env.VERCEL) return new Response(null, { status: 204 });
   const session = await getSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
 

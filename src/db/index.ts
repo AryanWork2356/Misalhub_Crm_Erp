@@ -13,7 +13,9 @@ async function create(): Promise<DB> {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { Pool } = await import("pg");
     // Serverless platforms spin up many instances: keep each one's pool small (use a pooled connection string).
-    const pool = new Pool({ connectionString: url, max: process.env.VERCEL ? 3 : 10 });
+    // "sslmode=require" is already treated as verify-full by node-postgres; say so explicitly to silence its warning.
+    const connectionString = url.replace(/sslmode=require/i, "sslmode=verify-full");
+    const pool = new Pool({ connectionString, max: process.env.VERCEL ? 3 : 10 });
     return drizzle(pool, { schema }) as unknown as DB;
   }
   const { PGlite } = await import("@electric-sql/pglite");
